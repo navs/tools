@@ -31,4 +31,10 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	BOOL mCaptureMode;
+	afx_msg void OnBnClickedCheckCaptureMode();
+
+	void UpdateMouseAction(WPARAM wParam, LPARAM lParam);
+	CString mMouseInfo;
 };

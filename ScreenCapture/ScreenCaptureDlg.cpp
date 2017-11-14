@@ -6,6 +6,7 @@
 #include "ScreenCapture.h"
 #include "ScreenCaptureDlg.h"
 #include "afxdialogex.h"
+#include "Resource.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +52,8 @@ END_MESSAGE_MAP()
 
 CScreenCaptureDlg::CScreenCaptureDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_SCREENCAPTURE_DIALOG, pParent)
+	, mCaptureMode(FALSE)
+	, mMouseInfo(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -58,12 +61,15 @@ CScreenCaptureDlg::CScreenCaptureDlg(CWnd* pParent /*=NULL*/)
 void CScreenCaptureDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Check(pDX, IDC_CHECK_CAPTURE_MODE, mCaptureMode);
+	DDX_Text(pDX, IDC_STATIC_MOUSE_INFO, mMouseInfo);
 }
 
 BEGIN_MESSAGE_MAP(CScreenCaptureDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_CHECK_CAPTURE_MODE, &CScreenCaptureDlg::OnBnClickedCheckCaptureMode)
 END_MESSAGE_MAP()
 
 
@@ -99,6 +105,7 @@ BOOL CScreenCaptureDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	mMouseInfo = (mCaptureMode) ? _T("Capturing ... ") : _T("No Capture Mode");
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -151,4 +158,43 @@ HCURSOR CScreenCaptureDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
+
+static CScreenCaptureDlg* Dlg = NULL;
+static HHOOK hook;
+LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam)
+{
+	// @TODO something !
+	if (code == HC_ACTION && Dlg != NULL) {
+		Dlg->UpdateMouseAction(wParam, lParam);
+	}
+	return CallNextHookEx(hook, code, wParam, lParam);
+}
+
+
+void CScreenCaptureDlg::OnBnClickedCheckCaptureMode()
+{
+	UpdateData();
+	if (mCaptureMode) {
+		// @TODO Start Mouse Capture
+		Dlg = this;
+		hook = SetWindowsHookEx(WH_MOUSE_LL, HookProc, NULL, 0);
+	}
+	else {
+		UnhookWindowsHookEx(hook);
+	}
+}
+
+void CScreenCaptureDlg::UpdateMouseAction(WPARAM wParam, LPARAM lParam)
+{
+	if (!mCaptureMode) {
+		return;
+	}
+	CString str;
+	MOUSEHOOKSTRUCT* mh = (MOUSEHOOKSTRUCT*)lParam;
+	str.Format(_T("wParam:%d, lParam:%d, %s, (%d,%d)"), wParam, lParam, (wParam == WM_LBUTTONUP) ? _T("CLICK!") : _T(""), mh->pt.x, mh->pt.y);
+
+
+	SetDlgItemText(IDC_STATIC_MOUSE_INFO, str);
+}
+
 
