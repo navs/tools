@@ -70,6 +70,8 @@ BEGIN_MESSAGE_MAP(CScreenCaptureDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_CHECK_CAPTURE_MODE, &CScreenCaptureDlg::OnBnClickedCheckCaptureMode)
+	ON_WM_NCPAINT()
+	ON_WM_NCACTIVATE()
 END_MESSAGE_MAP()
 
 
@@ -165,7 +167,9 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam)
 {
 	// @TODO something !
 	if (code == HC_ACTION && Dlg != NULL) {
-		Dlg->UpdateMouseAction(wParam, lParam);
+		if (Dlg->UpdateMouseAction(wParam, lParam)) {
+			return 1;
+		}
 	}
 	return CallNextHookEx(hook, code, wParam, lParam);
 }
@@ -177,6 +181,7 @@ void CScreenCaptureDlg::OnBnClickedCheckCaptureMode()
 	if (mCaptureMode) {
 		// @TODO Start Mouse Capture
 		Dlg = this;
+		mCaptureCount = 0;
 		hook = SetWindowsHookEx(WH_MOUSE_LL, HookProc, NULL, 0);
 	}
 	else {
@@ -184,17 +189,64 @@ void CScreenCaptureDlg::OnBnClickedCheckCaptureMode()
 	}
 }
 
-void CScreenCaptureDlg::UpdateMouseAction(WPARAM wParam, LPARAM lParam)
+BOOL CScreenCaptureDlg::UpdateMouseAction(WPARAM wParam, LPARAM lParam)
 {
 	if (!mCaptureMode) {
-		return;
+		return FALSE;
 	}
+
+	BOOL clicked = wParam == WM_LBUTTONUP;
+
 	CString str;
 	MOUSEHOOKSTRUCT* mh = (MOUSEHOOKSTRUCT*)lParam;
-	str.Format(_T("wParam:%d, lParam:%d, %s, (%d,%d)"), wParam, lParam, (wParam == WM_LBUTTONUP) ? _T("CLICK!") : _T(""), mh->pt.x, mh->pt.y);
+	str.Format(_T("wParam:%d, lParam:%d, %s, (%d,%d)"), wParam, lParam, (clicked) ? _T("CLICK!") : _T(""), mh->pt.x, mh->pt.y);
 
+	if (clicked) {
+		mPoints[mCaptureCount++] = { mh->pt.x, mh->pt.y };
+		if (mCaptureCount >= 2) {
 
+			theApp.mCapture.SelectRegion(mPoints);
+
+			UnhookWindowsHookEx(hook);
+
+			mCaptureMode = false;
+
+			CButton* button = (CButton*)GetDlgItem(IDC_CHECK_CAPTURE_MODE);
+			if (button) {
+				button->SetCheck(0);
+			}
+		}
+	}
 	SetDlgItemText(IDC_STATIC_MOUSE_INFO, str);
+	return wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP;
 }
 
 
+
+
+void CScreenCaptureDlg::OnNcPaint()
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
+	// 그리기 메시지에 대해서는 CDialogEx::OnNcPaint()을(를) 호출하지 마십시오.
+
+	CDC* pDC = new CDC();
+	pDC->Attach(::GetDC(NULL));
+	CRect rect = theApp.mCapture.GetRegion();
+	CBrush brush{ RGB(255,0,0) };
+	CBrush* oldBrush = pDC->SelectObject(&brush);
+
+	pDC->Rectangle(rect);
+	pDC->SelectObject(oldBrush);
+	pDC->Detach();
+
+	delete pDC;
+
+}
+
+
+BOOL CScreenCaptureDlg::OnNcActivate(BOOL bActive)
+{
+	//if (bActive)
+	//return CDialogEx::OnNcActivate(bActive);
+	return TRUE;
+}

@@ -185,6 +185,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Captures.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="ScreenCaptureDlg.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Captures.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="ScreenCaptureDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

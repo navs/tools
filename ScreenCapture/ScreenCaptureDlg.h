@@ -20,6 +20,8 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
 
+	int mCaptureCount = 0;
+	POINT mPoints[2];
 
 // 구현입니다.
 protected:
@@ -35,6 +37,8 @@ public:
 	BOOL mCaptureMode;
 	afx_msg void OnBnClickedCheckCaptureMode();
 
-	void UpdateMouseAction(WPARAM wParam, LPARAM lParam);
+	BOOL UpdateMouseAction(WPARAM wParam, LPARAM lParam);
 	CString mMouseInfo;
+	afx_msg void OnNcPaint();
+	afx_msg BOOL OnNcActivate(BOOL bActive);
 };

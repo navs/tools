@@ -9,7 +9,7 @@
 #endif
 
 #include "resource.h"		// 주 기호입니다.
-
+#include "Captures.h"
 
 // CScreenCaptureApp:
 // 이 클래스의 구현에 대해서는 ScreenCapture.cpp을 참조하십시오.
@@ -25,6 +25,7 @@ public:
 	virtual BOOL InitInstance();
 
 // 구현입니다.
+	Captures mCapture;
 
 	DECLARE_MESSAGE_MAP()
 };
